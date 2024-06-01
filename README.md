@@ -1,17 +1,17 @@
 cterm256
 ========
 
-8/16 => 256 color table generator & collection of 256-table'based color schemes & configurations for CLI/TUI apps.
+ANSI 8/16 => 256 color table generator & collection of 256-table'based configurations for CLI/TUI apps.
 
 ### Goals of this project
-- Use same color coding across ~~all~~ most of CLI/TUI apps
-- Ability to change colors of ~~all~~ most apps output with one command
+- Use the same color coding for CLI/TUI apps
+- Ability to quickly change the color scheme, including for already running applications
 - Generate 256 colors table based on 8/16 colors of any custom theme
 
-#### Use same color coding across ~~all~~ most of CLI/TUI apps
+#### Use the same color coding for CLI/TUI apps
 I think it’s nice to see semantically colored text in one color coding space across diffirent terminal apps output.
 
-#### Ability to change colors of ~~all~~ most apps output with one command
+#### Ability to quickly change the color scheme, including for already running applications
 If applications will use indexed color table, you can just change colors in that table. All that apps will change thier colorschemes with that one action. It is especially usefull when you're need to switch from dark to light theme and vice-versa.
 
 #### Generate 256 colors table based on 8/16 colors of any custom theme
