@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/shagohead/cterm256/internal/config"
 	"github.com/shagohead/cterm256/internal/filetypes"
 	"github.com/shagohead/cterm256/internal/filetypes/kitty"
 	"github.com/shagohead/cterm256/internal/generator"
@@ -23,7 +22,6 @@ func main() {
 var (
 	fileName     string
 	fileType     = &filetypes.Flag{}
-	configure    bool
 	debugOutput  bool
 	printColors  bool
 	printCurrent bool
@@ -40,16 +38,12 @@ func run() error {
 	fs.BoolVar(&printCurrent, "print-current", false, "Print table with current terminal colors")
 	fs.BoolVar(&debugOutput, "debug", false, "Print debug information")
 	fs.BoolVar(&skipGen, "skip-gen", false, "Skip color table generation")
-	fs.BoolVar(&configure, "configure", false, "Configure apps color schemes")
 	if err := fs.Parse(os.Args[1:]); err != nil {
 		return err
 	}
 	if printCurrent {
 		printer.PrintCurrent()
 		return nil
-	}
-	if configure {
-		return config.Configure()
 	}
 	ft := fileType.FileType
 	if ft == nil {

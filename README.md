@@ -12,7 +12,7 @@ cterm256
 I think it’s nice to see semantically colored text in one color coding space across diffirent terminal apps output.
 
 #### Ability to change colors of ~~all~~ most apps output with one command
-If applications will use indexed color table, you can just change colors in that table. All that apps will change thier colorschemes with that one action.
+If applications will use indexed color table, you can just change colors in that table. All that apps will change thier colorschemes with that one action. It is especially usefull when you're need to switch from dark to light theme and vice-versa.
 
 #### Generate 256 colors table based on 8/16 colors of any custom theme
 Most (if not all) of color schemes for terminals defines only 8 or 16 colors. With that assumption we can try to generate another colors in table based on that 8/16.
@@ -41,3 +41,7 @@ Lightness variations generated in HSLuv (developer oriented CIELUV) colors space
 
 ## TODO
 Try github.com/lucasb-eyer/go-colorful, which can prevent creating wrong colors for RGB: https://github.com/lucasb-eyer/go-colorful?tab=readme-ov-file#q-labluvhcl-seem-broken-your-library-sucks
+
+Autofix black & white colors for light-background themes by reversing them.
+
+Add images & video previews as examples of how it works and feels.

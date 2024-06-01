@@ -1,0 +1,9 @@
+# https://dandavison.github.io/delta/
+
+[delta]
+	minus-style = syntax 52
+	minus-emph-style = syntax 88
+	plus-style = syntax 22
+	plus-emph-style = syntax 28
+	line-numbers-minus-style = red
+	line-numbers-plus-style = green

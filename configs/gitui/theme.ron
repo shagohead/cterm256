@@ -1,0 +1,10 @@
+// https://github.com/extrawurst/gitui
+// https://github.com/extrawurst/gitui/blob/master/THEMES.md
+//
+// Can be «installed» like this:
+// ln -s /path-to-cterm256-configs/gitui/theme.ron $HOME/.config/gitui/theme.ron
+
+(
+    selection_bg: Some("236"),
+    cmdbar_bg: Some("236"),
+)

@@ -1,0 +1,6 @@
+# https://jonas.github.io/tig/
+
+[tig "color"]
+	cursor = 15 235
+	title-focus = white 234 bold
+	title-blur = white 234 dim
