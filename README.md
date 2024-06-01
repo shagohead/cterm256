@@ -17,6 +17,18 @@ If applications will use indexed color table, you can just change colors in that
 #### Generate 256 colors table based on 8/16 colors of any custom theme
 Most (if not all) of color schemes for terminals defines only 8 or 16 colors. With that assumption we can try to generate another colors in table based on that 8/16.
 
+## Installation
+
+Color table generator is an Go CLI app. Which can be installed like this:
+
+```go
+go install -v github.com/shagohead/cterm256/cmd/cterm256@latest
+```
+
+Currently generator supports only [kitty](https://sw.kovidgoyal.net/kitty/) color themes, but it can be extended by implementation of [`cterm.FileType`](https://pkg.go.dev/github.com/shagohead/cterm256/internal/cterm#ColorScheme) interface and adding that implementation into `internal/filetypes/filetypes.go` flag values.
+
+Configurations which are uses generated color scheme located are in `./configs` directory.
+
 ## Reason of this project
 
 Years ago i was used base16 terminal themes. But for me, 16 is not enough, i need variations of these 16 base colors. Mainly due to the need for different backgrounds: added/removed/changed blocks of code in diffs and UI elements of TUI apps like Vim/Neovim, Tig and so on.
