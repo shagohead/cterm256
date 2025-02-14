@@ -1,13 +1,15 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"path"
 
 	"github.com/shagohead/cterm256/internal/filetypes"
-	"github.com/shagohead/cterm256/internal/filetypes/kitty"
+	_ "github.com/shagohead/cterm256/internal/filetypes/kitty"
 	"github.com/shagohead/cterm256/internal/generator"
 	"github.com/shagohead/cterm256/internal/printer"
 )
@@ -31,9 +33,9 @@ var (
 
 func run() error {
 	fs := flag.NewFlagSet("cterm256", flag.ExitOnError)
-	fs.Var(fileType, "t", "File type. Supported values: "+filetypes.Supported)
+	fs.Var(fileType, "t", "File type. Supported values: "+filetypes.RegisteredNames())
 	fs.StringVar(&fileName, "f", "", "Source colorscheme file. If omits STDIN will be used")
-	fs.BoolVar(&overwrite, "w", false, "Overwrite source colorscheme file")
+	fs.BoolVar(&overwrite, "w", false, "Overwrite source colorscheme file instead of writing to STDOUT")
 	fs.BoolVar(&printColors, "print", false, "Print color table instead of colorscheme output")
 	fs.BoolVar(&printCurrent, "print-current", false, "Print table with current terminal colors")
 	fs.BoolVar(&debugOutput, "debug", false, "Print debug information")
@@ -47,7 +49,17 @@ func run() error {
 	}
 	ft := fileType.FileType
 	if ft == nil {
-		ft = &kitty.FileType{}
+		if fileName == "" {
+			return errors.New("use -t or -f option")
+		}
+		ext := path.Ext(fileName)
+		for name, ftype := range filetypes.RegisteredTypes() {
+			if ftype.Support(fileName, ext) {
+				ft = ftype
+				os.Stderr.WriteString(name + " will be used as type\n")
+				break
+			}
+		}
 	}
 	var in io.Reader
 	var file *os.File

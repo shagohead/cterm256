@@ -9,7 +9,16 @@ import (
 	"strconv"
 
 	"github.com/shagohead/cterm256/internal/cterm"
+	"github.com/shagohead/cterm256/internal/filetypes"
 )
+
+var kvPattern, idxPattern *regexp.Regexp
+
+func init() {
+	filetypes.Register("kitty", &FileType{})
+	kvPattern = regexp.MustCompile(`(?P<key>[^\s]+)\s+#(?P<val>[^\s]+)`)
+	idxPattern = regexp.MustCompile(`color(?P<idx>\d+)`)
+}
 
 const (
 	foregroundKeyword = `foreground`
@@ -18,20 +27,20 @@ const (
 
 type FileType struct{}
 
+// Support implements cterm.FileType.
+func (f *FileType) Support(name, ext string) bool {
+	if ext == ".conf" {
+		return true
+	}
+	return false
+}
+
 // Parse implements parser.FileType.
 func (*FileType) Parse(input io.Reader) (*cterm.ColorScheme, error) {
 	themeScanner := bufio.NewScanner(input)
-	kvPattern, err := regexp.Compile(`(?P<key>[^\s]+)\s+#(?P<val>[^\s]+)`)
-	if err != nil {
-		return nil, err
-	}
-	idxPattern, err := regexp.Compile(`color(?P<idx>\d+)`)
-	if err != nil {
-		return nil, err
-	}
-	tm := &cterm.ColorScheme{
-		Custom: make(map[string]cterm.Color),
-	}
+	customColors := make(map[string]cterm.Color)
+	tm := &cterm.ColorScheme{PassThrough: customColors}
+	var err error
 	for themeScanner.Scan() {
 		if len(themeScanner.Bytes()) == 0 {
 			continue
@@ -56,7 +65,7 @@ func (*FileType) Parse(input io.Reader) (*cterm.ColorScheme, error) {
 		idxMatch := idxPattern.FindSubmatch(key)
 		if len(idxMatch) < 1 {
 			custom := string(key)
-			tm.Custom[custom] = color
+			customColors[custom] = color
 			switch custom {
 			case foregroundKeyword:
 				tm.Foreground = &color
@@ -81,12 +90,18 @@ func (*FileType) Parse(input io.Reader) (*cterm.ColorScheme, error) {
 	if err := themeScanner.Err(); err != nil {
 		return tm, err
 	}
+	if _, ok := customColors["cursor"]; !ok && tm.Foreground != nil {
+		customColors["cursor"] = *tm.Foreground
+	}
+	if _, ok := customColors["cursor_text_color"]; !ok && tm.Background != nil {
+		customColors["cursor_text_color"] = *tm.Background
+	}
 	return tm, nil
 }
 
 // Write implements cterm.FileType.
 func (f *FileType) Write(output io.Writer, theme *cterm.ColorScheme) error {
-	for n, c := range theme.Custom {
+	for n, c := range theme.PassThrough.(map[string]cterm.Color) {
 		if err := writeColor(output, c, n); err != nil {
 			return err
 		}

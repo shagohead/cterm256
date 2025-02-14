@@ -3,10 +3,36 @@ package filetypes
 import (
 	"errors"
 	"flag"
+	"strings"
 
 	"github.com/shagohead/cterm256/internal/cterm"
-	"github.com/shagohead/cterm256/internal/filetypes/kitty"
 )
+
+var ftypes = make(map[string]cterm.FileType)
+
+func Register(name string, ftype cterm.FileType) {
+	if _, ok := ftypes[name]; ok {
+		panic("duplicate FileType's name")
+	}
+	ftypes[name] = ftype
+}
+
+func RegisteredTypes() map[string]cterm.FileType {
+	return ftypes
+}
+
+func RegisteredNames() string {
+	s := strings.Builder{}
+	n := len(ftypes)
+	var i int
+	for name := range ftypes {
+		s.WriteString(name)
+		if i++; i < n {
+			s.WriteRune(' ')
+		}
+	}
+	return s.String()
+}
 
 // FileType selector flag.
 type Flag struct {
@@ -14,16 +40,13 @@ type Flag struct {
 	FileType cterm.FileType
 }
 
-const Supported = "kitty"
-
 // Set implements flag.Value.
 func (f *Flag) Set(val string) error {
 	f.Name = val
-	switch val {
-	case "kitty":
-		f.FileType = &kitty.FileType{}
-	default:
-		return errors.New("unknown filetype. supported values: " + Supported)
+	var ok bool
+	f.FileType, ok = ftypes[val]
+	if !ok {
+		return errors.New("unknown filetype. supported values: " + RegisteredNames())
 	}
 	return nil
 }
