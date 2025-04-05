@@ -3,7 +3,7 @@ package printer
 import (
 	"fmt"
 
-	"github.com/shagohead/cterm256/internal/cterm"
+	"github.com/shagohead/cterm256/pkg/termcolor"
 )
 
 func printTable(fn func(n int) string) {
@@ -54,10 +54,9 @@ func printTable(fn func(n int) string) {
 	fmt.Print("\033[0m\n\n")
 }
 
-func PrintScheme(scheme *cterm.ColorScheme) {
+func PrintScheme(cs termcolor.Table) {
 	printTable(func(n int) string {
-		rgb := scheme.Indexed[n].RGB()
-		r, g, b := int(rgb.Red*255), int(rgb.Green*255), int(rgb.Blue*255)
+		r, g, b := cs.Color(n).RGB()
 		return fmt.Sprintf("2;%v;%v;%v", r, g, b)
 	})
 }

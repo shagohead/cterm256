@@ -1,0 +1,43 @@
+[font]
+size = 15
+
+[colors]
+indexed_colors = [
+  { index = 0, color = "#000000" },
+  { index = 8, color = "#111111" },
+  { index = 22, color = "#2b3922" },
+  { index = 28, color = "#475b39" }
+]
+
+[colors.bright]
+black = "#626880"
+blue = "#8CAAEE"
+cyan = "#81C8BE"
+green = "#A6D189"
+magenta = "#F4B8E4"
+red = "#E78284"
+white = "#A5ADCE"
+yellow = "#E5C890"
+
+[colors.cursor]
+cursor = "#8e8e8e"
+text = "#080808"
+
+[colors.normal]
+black = "#51576D"
+blue = "#8CAAEE"
+cyan = "#81C8BE"
+green = "#A6D189"
+magenta = "#F4B8E4"
+red = "#E78284"
+white = "#B5BFE2"
+yellow = "#E5C890"
+
+[colors.primary]
+background = "#303446"
+bright_foreground = "#eeeeee"
+foreground = "#C6D0F5"
+
+[colors.selection]
+background = "#b2ceee"
+text = "#080808"

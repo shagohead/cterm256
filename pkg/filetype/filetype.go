@@ -1,23 +1,29 @@
-package filetypes
+package filetype
 
 import (
 	"errors"
 	"flag"
+	"io"
 	"strings"
 
-	"github.com/shagohead/cterm256/internal/cterm"
+	"github.com/shagohead/cterm256/pkg/termcolor"
 )
 
-var ftypes = make(map[string]cterm.FileType)
+type FileType interface {
+	Parse(input io.Reader) (termcolor.Table, error)
+	Support(name, ext string) bool
+}
 
-func Register(name string, ftype cterm.FileType) {
+var ftypes = make(map[string]FileType)
+
+func Register(name string, ftype FileType) {
 	if _, ok := ftypes[name]; ok {
-		panic("duplicate FileType's name")
+		panic("duplicate FileType name: " + name)
 	}
 	ftypes[name] = ftype
 }
 
-func RegisteredTypes() map[string]cterm.FileType {
+func RegisteredTypes() map[string]FileType {
 	return ftypes
 }
 
@@ -37,7 +43,7 @@ func RegisteredNames() string {
 // FileType selector flag.
 type Flag struct {
 	Name     string
-	FileType cterm.FileType
+	FileType FileType
 }
 
 // Set implements flag.Value.

@@ -35,25 +35,23 @@ Years ago i was used base16 terminal themes. But for me, 16 is not enough, i nee
 
 I decided to use 8-bit ANSI color table. Most of color schemes at internet defines only standard & high intensity colors which stands at 0-7 and 8-15 numbers in that table. Another 240 colors are: 6x6x6 cube and 24-length grayscale. How to generate these colorspace from theme defined 8/16 colors?
 
-## Algorithm
+## Generated color table cheatsheat
 
-Grayscale can be maded by generating gradient of lightness based on black color (which number is 0). For 6x6x6 cube i've found these correlations:
+There two types of colors that can be distinguished: foreground and background.
 
-- Top-left color of first side is the black (#0) color.
-- Top row (5 colors, except top-left black) of first side is the gradient of blue (#12).
-- Left column (5 colors, except top-left black) of first side is the gradient red (#9).
-- Top-left color of all 5 remaining sides is the gradient of green (#10).
-- Top row of remaining sides is the gradient made by mixing of top-left green and blue from the top row of the first side.
-- Left column of remaining sides is the gradient made by mixing of top-left green and red from the left column of the first side.
-- All remain colors made by mixing intersecting top row and left column and top-left cell colors.
+Background colors are based created from main red, green and blue color hue and saturation, but with lightness of main background color. Red, green and blue are used for creation of 5 colors each with lightness from background to foreground. These gradients are:
 
-Because some of these colors will be used as backgrounds, they need to have same lightness as the background. With that, cube generated from standard colors will be slightly diffirent to standard cube.
+- Red: 52, 88, 124, 160, 196.
+- Green: 22, 28, 34, 40, 46.
+- Blue: 17, 18, 19, 20, 21.
+
+Grayscale 232-252 corresponds to transition from background color to foreground or white or «bright white» color, which one will be more contrast to background.
 
 Lightness variations generated in HSLuv (developer oriented CIELUV) colors space, which produces [accurate results](https://www.hsluv.org/comparison/), which [especially important for backgrounds](https://www.kuon.ch/post/2020-03-08-hsluv/).
 
-## TODO
-Try github.com/lucasb-eyer/go-colorful, which can prevent creating wrong colors for RGB: https://github.com/lucasb-eyer/go-colorful?tab=readme-ov-file#q-labluvhcl-seem-broken-your-library-sucks
+In light color schemes, if white is lighter than black they will be swaped. Because switching between light and dark themes should not change semantics of colors, and white color should be high contrast to background.
 
-Autofix black & white colors for light-background themes by reversing them.
+## TODO
+Fix colors out of range.
 
 Add images & video previews as examples of how it works and feels.

@@ -8,10 +8,11 @@ import (
 	"os"
 	"path"
 
-	"github.com/shagohead/cterm256/internal/filetypes"
-	_ "github.com/shagohead/cterm256/internal/filetypes/kitty"
-	"github.com/shagohead/cterm256/internal/generator"
-	"github.com/shagohead/cterm256/internal/printer"
+	"github.com/shagohead/cterm256/pkg/filetype"
+	_ "github.com/shagohead/cterm256/pkg/filetype/alacritty"
+	_ "github.com/shagohead/cterm256/pkg/filetype/kitty"
+	"github.com/shagohead/cterm256/pkg/printer"
+	"github.com/shagohead/cterm256/pkg/termcolor"
 )
 
 func main() {
@@ -23,7 +24,7 @@ func main() {
 
 var (
 	fileName     string
-	fileType     = &filetypes.Flag{}
+	fileType     = &filetype.Flag{}
 	debugOutput  bool
 	printColors  bool
 	printCurrent bool
@@ -31,15 +32,25 @@ var (
 	skipGen      bool
 )
 
+const cmdMain = "cterm256"
+
 func run() error {
-	fs := flag.NewFlagSet("cterm256", flag.ExitOnError)
-	fs.Var(fileType, "t", "File type. Supported values: "+filetypes.RegisteredNames())
+	fs := flag.NewFlagSet(cmdMain, flag.ExitOnError)
+	fs.Var(fileType, "t", "File type. Supported values: "+filetype.RegisteredNames())
 	fs.StringVar(&fileName, "f", "", "Source colorscheme file. If omits STDIN will be used")
 	fs.BoolVar(&overwrite, "w", false, "Overwrite source colorscheme file instead of writing to STDOUT")
 	fs.BoolVar(&printColors, "print", false, "Print color table instead of colorscheme output")
 	fs.BoolVar(&printCurrent, "print-current", false, "Print table with current terminal colors")
 	fs.BoolVar(&debugOutput, "debug", false, "Print debug information")
 	fs.BoolVar(&skipGen, "skip-gen", false, "Skip color table generation")
+	fs.Usage = func() {
+		fmt.Fprint(fs.Output(), `Usage: `+cmdMain+` [-h | --help]
+
+Patch 8/16 terminal color scheme with generated 239 other ANSI colors.
+
+`)
+		fs.PrintDefaults()
+	}
 	if err := fs.Parse(os.Args[1:]); err != nil {
 		return err
 	}
@@ -53,12 +64,15 @@ func run() error {
 			return errors.New("use -t or -f option")
 		}
 		ext := path.Ext(fileName)
-		for name, ftype := range filetypes.RegisteredTypes() {
+		for name, ftype := range filetype.RegisteredTypes() {
 			if ftype.Support(fileName, ext) {
 				ft = ftype
-				os.Stderr.WriteString(name + " will be used as type\n")
+				os.Stderr.WriteString("Determined type by file name: " + name + "\n")
 				break
 			}
+		}
+		if ft == nil {
+			return fmt.Errorf("cannot find supported file type of %s", fileName)
 		}
 	}
 	var in io.Reader
@@ -82,7 +96,7 @@ func run() error {
 		return err
 	}
 	if !skipGen {
-		if err := generator.Generate(scheme); err != nil {
+		if err := termcolor.Generate(scheme); err != nil {
 			return err
 		}
 	}
@@ -93,14 +107,14 @@ func run() error {
 		printer.PrintScheme(scheme)
 		return nil
 	}
-	var w io.Writer = os.Stdout
+	var w termcolor.Writer = os.Stdout
 	if overwrite {
 		if _, err := file.Seek(0, io.SeekStart); err != nil {
 			return err
 		}
 		w = file
 	}
-	if err := ft.Write(w, scheme); err != nil {
+	if err := scheme.Write(w); err != nil {
 		return err
 	}
 	return nil
