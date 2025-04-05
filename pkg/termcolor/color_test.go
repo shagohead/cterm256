@@ -14,6 +14,7 @@ func Test_HEX(t *testing.T) {
 		{input: "00000", valid: false},
 		{input: "0000000", valid: false},
 		{input: "#ffffff", valid: true},
+		{input: "#FFFFFF", valid: true},
 		{input: "#gggggg", valid: false},
 	} {
 		t.Run(tt.input, func(t *testing.T) {

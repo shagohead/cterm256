@@ -9,7 +9,7 @@ import (
 var HEX *regexp.Regexp
 
 func init() {
-	HEX = regexp.MustCompile(`^#?[0-9a-f]{6}$`)
+	HEX = regexp.MustCompile(`^#?[0-9a-fA-F]{6}$`)
 }
 
 type Color interface {
