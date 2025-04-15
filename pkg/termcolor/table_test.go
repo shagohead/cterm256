@@ -70,6 +70,11 @@ type table struct {
 	back   hsl
 }
 
+// Write implements Table.
+func (t *table) Write(w Writer) error {
+	panic("unimplemented")
+}
+
 // Background implements Table.
 func (t *table) Background() Color {
 	return t.back

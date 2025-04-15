@@ -30,6 +30,7 @@ var (
 	printCurrent bool
 	overwrite    bool
 	skipGen      bool
+	lightOutput  bool
 )
 
 const cmdMain = "cterm256"
@@ -43,6 +44,7 @@ func run() error {
 	fs.BoolVar(&printCurrent, "print-current", false, "Print table with current terminal colors")
 	fs.BoolVar(&debugOutput, "debug", false, "Print debug information")
 	fs.BoolVar(&skipGen, "skip-gen", false, "Skip color table generation")
+	fs.BoolVar(&lightOutput, "light-stderr", false, "Write light/dark to STDERR")
 	fs.Usage = func() {
 		fmt.Fprint(fs.Output(), `Usage: `+cmdMain+` [-h | --help]
 
@@ -67,7 +69,9 @@ Patch 8/16 terminal color scheme with generated 239 other ANSI colors.
 		for name, ftype := range filetype.RegisteredTypes() {
 			if ftype.Support(fileName, ext) {
 				ft = ftype
-				os.Stderr.WriteString("Determined type by file name: " + name + "\n")
+				if !lightOutput {
+					os.Stderr.WriteString("Type determined by file name: " + name + "\n")
+				}
 				break
 			}
 		}
@@ -116,6 +120,13 @@ Patch 8/16 terminal color scheme with generated 239 other ANSI colors.
 	}
 	if err := scheme.Write(w); err != nil {
 		return err
+	}
+	if lightOutput {
+		if scheme.Color(1).Lightness() > scheme.Color(16).Lightness() {
+			os.Stderr.WriteString("dark")
+		} else {
+			os.Stderr.WriteString("light")
+		}
 	}
 	return nil
 }

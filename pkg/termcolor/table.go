@@ -30,7 +30,7 @@ type Writer interface {
 
 // Generate 256 color palette based on first 8/16 + background & foreground.
 func Generate(cs Table) error {
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if cs.Color(i) == nil {
 			return fmt.Errorf("provided scheme missing color %d", i)
 		}
@@ -74,7 +74,7 @@ func Generate(cs Table) error {
 		fmt.Println("scheme missing foreground color; will use ", repr, " instead")
 	}
 	delta := 1.0 / 25
-	for i := 0; i < 24; i++ {
+	for i := range 24 {
 		s := delta * float64(i+1)
 		cs.SetColor(232+i, background.Blend(foreground, s, s, s))
 	}
@@ -119,7 +119,7 @@ func gradient(cs Table, isDark bool, brindex int, targets [5]int) {
 
 func cube(cs Table, maxContrast func(a, b float64) float64) {
 	// Generate 6x6x6 colors cube
-	for side := 0; side < 6; side++ {
+	for side := range 6 {
 		perside := 5
 		// RGB colors for every side.
 		// Green is left/top on every side.
@@ -134,8 +134,8 @@ func cube(cs Table, maxContrast func(a, b float64) float64) {
 			red = red.Blend(green, 0.1*s, 0.2*s, 0)
 			blue = blue.Blend(green, 0.1*s, 0.2*s, 0)
 		}
-		for col := 0; col < perside; col++ {
-			for row := 0; row < perside; row++ {
+		for col := range perside {
+			for row := range perside {
 				cubeCell(cs, maxContrast, side, col, row, red, green, blue)
 			}
 		}
