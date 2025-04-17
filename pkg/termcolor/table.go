@@ -1,6 +1,7 @@
 package termcolor
 
 import (
+	"errors"
 	"fmt"
 	"io"
 )
@@ -28,8 +29,10 @@ type Writer interface {
 	io.StringWriter
 }
 
+var errMissingBackground = errors.New("provided scheme missing (primary) background color")
+
 // Generate 256 color palette based on first 8/16 + background & foreground.
-func Generate(cs Table) error {
+func Generate(cs Table, warns io.Writer) error {
 	for i := range 8 {
 		if cs.Color(i) == nil {
 			return fmt.Errorf("provided scheme missing color %d", i)
@@ -37,13 +40,25 @@ func Generate(cs Table) error {
 	}
 	background := cs.Background()
 	if background == nil {
-		fmt.Println("scheme missing background color; will use black/0 instead")
-		background = cs.Color(0)
+		return errMissingBackground
 	}
-	cs.SetColor(16, cs.Color(0).With(-1, -1, background.Lightness()))
 
 	// Is it dark or light theme?
-	isDark := cs.Color(1).Lightness() > cs.Color(16).Lightness()
+	isDark := cs.Color(1).Lightness() > background.Lightness()
+
+	// TODO: Swap bright and norm colors if needed
+
+	// Swap black and white colors for light theme if needed.
+	if b, w := cs.Color(0), cs.Color(7); !isDark && w.Lightness() > b.Lightness() {
+		cs.SetColor(0, w)
+		cs.SetColor(7, b)
+		if b, w = cs.Color(8), cs.Color(15); b != nil && w != nil {
+			cs.SetColor(8, w)
+			cs.SetColor(15, b)
+		}
+	}
+
+	cs.SetColor(16, cs.Color(0).With(-1, -1, background.Lightness()))
 
 	// R/g/b based gradients.
 	for _, c := range []struct {
@@ -71,7 +86,7 @@ func Generate(cs Table) error {
 				repr = "brwhite/15"
 			}
 		}
-		fmt.Println("scheme missing foreground color; will use ", repr, " instead")
+		fmt.Fprintln(warns, "scheme missing foreground color; will use ", repr, " instead")
 	}
 	delta := 1.0 / 25
 	for i := range 24 {

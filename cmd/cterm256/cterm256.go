@@ -100,7 +100,11 @@ Patch 8/16 terminal color scheme with generated 239 other ANSI colors.
 		return err
 	}
 	if !skipGen {
-		if err := termcolor.Generate(scheme); err != nil {
+		var warns io.Writer = os.Stderr
+		if lightOutput {
+			warns = new(noopWriter)
+		}
+		if err := termcolor.Generate(scheme, warns); err != nil {
 			return err
 		}
 	}
@@ -129,4 +133,11 @@ Patch 8/16 terminal color scheme with generated 239 other ANSI colors.
 		}
 	}
 	return nil
+}
+
+type noopWriter struct{}
+
+// Write implements io.Writer.
+func (*noopWriter) Write(p []byte) (n int, err error) {
+	return 0, nil
 }
