@@ -62,14 +62,14 @@ func Generate(cs Table, warns io.Writer) error {
 
 	// R/g/b based gradients.
 	for _, c := range []struct {
-		brindex int    // Bright r/g/b
-		targets [5]int // Indexes of tinted versions
+		brsource int    // Bright r/g/b
+		targets  [5]int // Indexes of tinted versions
 	}{
 		{9, [5]int{52, 88, 124, 160, 196}}, // Red
 		{12, [5]int{17, 18, 19, 20, 21}},   // Green
 		{10, [5]int{22, 28, 34, 40, 46}},   // Blue
 	} {
-		gradient(cs, isDark, c.brindex, c.targets)
+		gradient(cs, isDark, c.brsource, c.targets)
 	}
 
 	contrast := maxContrast(isDark)
@@ -127,8 +127,8 @@ func gradient(cs Table, isDark bool, brindex int, targets [5]int) {
 		}
 	}
 	for i, target := range targets {
-		i := float64(i + 1)
-		cs.SetColor(target, bg.Blend(src, 1, 0.1*i, 0.1*i))
+		d := float64(i) * 0.2
+		cs.SetColor(target, bg.Blend(src, 1, 1, d))
 	}
 }
 

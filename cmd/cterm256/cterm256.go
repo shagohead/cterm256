@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 	"path"
+	"strconv"
+	"strings"
 
 	"github.com/shagohead/cterm256/pkg/filetype"
 	_ "github.com/shagohead/cterm256/pkg/filetype/alacritty"
@@ -25,7 +27,7 @@ func main() {
 var (
 	fileName     string
 	fileType     = &filetype.Flag{}
-	debugOutput  bool
+	debugColors  string
 	printColors  bool
 	printCurrent bool
 	overwrite    bool
@@ -42,7 +44,7 @@ func run() error {
 	fs.BoolVar(&overwrite, "w", false, "Overwrite source colorscheme file instead of writing to STDOUT")
 	fs.BoolVar(&printColors, "print", false, "Print color table instead of colorscheme output")
 	fs.BoolVar(&printCurrent, "print-current", false, "Print table with current terminal colors")
-	fs.BoolVar(&debugOutput, "debug", false, "Print debug information")
+	fs.StringVar(&debugColors, "debug", "", "Print HSL data for specified colors (`number/b/bg/f/fg`), separetaed by comma and optionally prefixed with «-» for blank line prepending")
 	fs.BoolVar(&skipGen, "skip-gen", false, "Skip color table generation")
 	fs.BoolVar(&lightOutput, "light-stderr", false, "Write light/dark to STDERR")
 	fs.Usage = func() {
@@ -108,11 +110,31 @@ Patch 8/16 terminal color scheme with generated 239 other ANSI colors.
 			return err
 		}
 	}
-	if debugOutput {
-		fmt.Printf("%+v\n", scheme)
+	if debugColors != "" {
+		for i, raw := range strings.Split(debugColors, ",") {
+			if len(raw) > 0 && raw[0] == '-' {
+				fmt.Fprint(os.Stderr, "\n")
+				raw = raw[1:]
+			}
+			switch raw {
+			case "b", "bg":
+				fmt.Fprintf(os.Stderr, "bg: %+v\n", scheme.Background())
+			case "f", "fg":
+				fmt.Fprintf(os.Stderr, "fg: %+v\n", scheme.Foreground())
+			default:
+				n, err := strconv.Atoi(raw)
+				if err != nil {
+					return fmt.Errorf("debug flag[%d]: %v", i, err)
+				}
+				fmt.Fprintf(os.Stderr, "%d: %+v\n", n, scheme.Color(n))
+			}
+		}
 	}
 	if printColors {
 		printer.PrintScheme(scheme)
+		return nil
+	}
+	if debugColors != "" {
 		return nil
 	}
 	var w termcolor.Writer = os.Stdout
