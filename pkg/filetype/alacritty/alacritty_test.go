@@ -1,12 +1,9 @@
 package alacritty
 
 import (
-	"bytes"
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 
 	"github.com/shagohead/cterm256/pkg/termcolor"
 )
@@ -15,7 +12,7 @@ func TestParse(t *testing.T) {
 	expected := func(colors map[int]string) func(t *testing.T, cs termcolor.Table) {
 		return func(t *testing.T, cs termcolor.Table) {
 			for idx, want := range colors {
-				if got := cs.Color(idx).HEX(); got != want {
+				if got := strings.ToLower(cs.Color(idx).HEX()); got != want {
 					t.Errorf("Color %d.HEX() = %s, want %s", idx, got, want)
 				}
 			}
@@ -43,7 +40,7 @@ func TestParse(t *testing.T) {
 				{ index = 1, color = "#E78284" }
 			]
 			`,
-			want: expected(map[int]string{0: "#51576D", 1: "#E78284"}),
+			want: expected(map[int]string{0: "#51576d", 1: "#e78284"}),
 		},
 		{
 			name: "colors.indexed_colors as array of tables. ver2",
@@ -57,7 +54,7 @@ func TestParse(t *testing.T) {
 			color = '#E78284'
 			index = 1
 			`,
-			want: expected(map[int]string{0: "#51576D", 1: "#E78284"}),
+			want: expected(map[int]string{0: "#51576d", 1: "#e78284"}),
 		},
 		{
 			name: "foreground/background",
@@ -74,9 +71,9 @@ func TestParse(t *testing.T) {
 					hex   string
 				}{
 					{name: "background", color: cs.Background(), hex: "#303446"},
-					{name: "foreground", color: cs.Foreground(), hex: "#C6D0F5"},
+					{name: "foreground", color: cs.Foreground(), hex: "#c6d0f5"},
 				} {
-					if want.color == nil {
+					if want.color.Nil() {
 						t.Fatalf("%s is nil", want.name)
 					}
 					if got := want.color.HEX(); got != want.hex {
@@ -99,14 +96,14 @@ func TestParse(t *testing.T) {
 			yellow = "#E5C890"
 			`,
 			want: expected(map[int]string{
-				0: "#51576D",
-				1: "#8CAAEE",
-				2: "#81C8BE",
-				3: "#A6D189",
-				4: "#F4B8E4",
-				5: "#E78284",
-				6: "#B5BFE2",
-				7: "#E5C890",
+				0: "#51576d",
+				4: "#8caaee",
+				6: "#81c8be",
+				2: "#a6d189",
+				5: "#f4b8e4",
+				1: "#e78284",
+				7: "#b5bfe2",
+				3: "#e5c890",
 			}),
 		},
 		{
@@ -124,13 +121,13 @@ func TestParse(t *testing.T) {
 			`,
 			want: expected(map[int]string{
 				8:  "#626880",
-				9:  "#8CAAEE",
-				10: "#81C8BE",
-				11: "#A6D189",
-				12: "#F4B8E4",
-				13: "#E78284",
-				14: "#A5ADCE",
-				15: "#E5C890",
+				12: "#8caaee",
+				14: "#81c8be",
+				10: "#a6d189",
+				13: "#f4b8e4",
+				9:  "#e78284",
+				15: "#a5adce",
+				11: "#e5c890",
 			}),
 		},
 	} {

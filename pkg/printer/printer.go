@@ -8,7 +8,7 @@ import (
 
 func printTable(fn func(n int) string) {
 	fmt.Printf("Standard%32s\n", "Bright")
-	for n := 0; n < 16; n++ {
+	for n := range 16 {
 		if n == 8 {
 			fmt.Print("\033[0m  ")
 		}

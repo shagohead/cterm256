@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 // Color scheme API.
@@ -34,31 +36,61 @@ var errMissingBackground = errors.New("provided scheme missing (primary) backgro
 // Generate 256 color palette based on first 8/16 + background & foreground.
 func Generate(cs Table, warns io.Writer) error {
 	for i := range 8 {
-		if cs.Color(i) == nil {
+		if cs.Color(i).Nil() {
 			return fmt.Errorf("provided scheme missing color %d", i)
 		}
 	}
 	background := cs.Background()
-	if background == nil {
+	if background.Nil() {
 		return errMissingBackground
 	}
 
 	// Is it dark or light theme?
-	isDark := cs.Color(1).Lightness() > background.Lightness()
-
-	// TODO: Swap bright and norm colors if needed
+	bglight := background.Lightness()
+	isDark := cs.Color(1).Lightness() > bglight
+	contrast := maxContrast(isDark)
 
 	// Swap black and white colors for light theme if needed.
 	if b, w := cs.Color(0), cs.Color(7); !isDark && w.Lightness() > b.Lightness() {
 		cs.SetColor(0, w)
 		cs.SetColor(7, b)
-		if b, w = cs.Color(8), cs.Color(15); b != nil && w != nil {
+		if b, w = cs.Color(8), cs.Color(15); !b.Nil() && !w.Nil() {
 			cs.SetColor(8, w)
 			cs.SetColor(15, b)
 		}
 	}
 
-	cs.SetColor(16, cs.Color(0).With(-1, -1, background.Lightness()))
+	// Set 16 from 0 with background lightness.
+	{
+		_, a, b := cs.Color(0).src.Lab()
+		l, _, _ := background.src.Lab()
+		cs.SetColor(16, Color{colorful.Lab(l, a, b), true})
+	}
+
+	// Fix bright (and normal) colors: create, swap or change lightness if needed.
+	tobright := makebright(bglight, isDark)
+	for i := range 8 {
+		norm, bright := cs.Color(i), cs.Color(i+8)
+		if bright.Nil() {
+			l, a, b := norm.src.Lab()
+			cs.SetColor(i+8, color(tobright(l), a, b))
+			continue
+		}
+		n, _, _ := norm.src.Lab()
+		b, _, _ := bright.src.Lab()
+		if n == b {
+			l, a, b := bright.src.Lab()
+			cs.SetColor(i+8, color(tobright(l), a, b))
+			continue
+		}
+		// TODO: Fix schemes like Solarized, which uses bright as completly different colors.
+		// Solarized bright colors are background/foreground gradient.
+		// We already have 232-255 for this purpose.
+		if contrast(n, b) == n {
+			cs.SetColor(i, bright)
+			cs.SetColor(i+8, norm)
+		}
+	}
 
 	// R/g/b based gradients.
 	for _, c := range []struct {
@@ -66,21 +98,20 @@ func Generate(cs Table, warns io.Writer) error {
 		targets  [5]int // Indexes of tinted versions
 	}{
 		{9, [5]int{52, 88, 124, 160, 196}}, // Red
-		{12, [5]int{17, 18, 19, 20, 21}},   // Green
-		{10, [5]int{22, 28, 34, 40, 46}},   // Blue
+		{10, [5]int{22, 28, 34, 40, 46}},   // Green
+		{12, [5]int{17, 18, 19, 20, 21}},   // Blue
 	} {
 		gradient(cs, isDark, c.brsource, c.targets)
 	}
 
-	contrast := maxContrast(isDark)
 	cube(cs, contrast)
 
 	foreground := cs.Foreground()
-	if foreground == nil {
+	if foreground.Nil() {
 		white := cs.Color(7)
 		foreground = white
 		repr := "white/7"
-		if brwhite := cs.Color(15); brwhite != nil {
+		if brwhite := cs.Color(15); !brwhite.Nil() {
 			if contrast(brwhite.Lightness(), white.Lightness()) == brwhite.Lightness() {
 				foreground = brwhite
 				repr = "brwhite/15"
@@ -91,11 +122,25 @@ func Generate(cs Table, warns io.Writer) error {
 	delta := 1.0 / 25
 	for i := range 24 {
 		s := delta * float64(i+1)
-		cs.SetColor(232+i, background.Blend(foreground, s, s, s))
+		sl, sa, sb := background.src.Lab()
+		dl, da, db := foreground.src.Lab()
+		cs.SetColor(232+i, color(blend(sl, dl, s), blend(sa, da, s), blend(sb, db, s)))
 	}
 	return nil
 }
 
+func makebright(bg float64, dark bool) func(src float64) float64 {
+	return func(src float64) float64 {
+		// TODO: implement
+		return src
+	}
+}
+
+func blend(src, dst, scale float64) float64 {
+	return src + (scale * (dst - src))
+}
+
+// maxContrast treats a and b as lightness values and returns one which have highest contrast with background.
 func maxContrast(isDark bool) func(a, b float64) float64 {
 	if isDark {
 		return func(a, b float64) float64 {
@@ -128,61 +173,49 @@ func gradient(cs Table, isDark bool, brindex int, targets [5]int) {
 	}
 	for i, target := range targets {
 		d := float64(i) * 0.2
-		cs.SetColor(target, bg.Blend(src, 1, 1, d))
+		sl, _, _ := bg.src.Lab()
+		dl, da, db := src.src.Lab()
+		cs.SetColor(target, color(blend(sl, dl, d), da, db))
 	}
 }
 
+// Generate 6x6x6 colors cube
 func cube(cs Table, maxContrast func(a, b float64) float64) {
-	// Generate 6x6x6 colors cube
-	for side := range 6 {
-		perside := 5
-		// RGB colors for every side.
-		// Green is left/top on every side.
-		// Red is left/bottom at first side + green.
-		// Blue is right/top at first side + green.
-		red := cs.Color(196)
+	for side := 1; side < 6; side++ {
 		green := cs.Color(side*6 + 16)
-		blue := cs.Color(21)
-		if side > 0 {
-			perside = 6
-			s := float64(side)
-			red = red.Blend(green, 0.1*s, 0.2*s, 0)
-			blue = blue.Blend(green, 0.1*s, 0.2*s, 0)
+		yl, ya, yb := green.src.Lab()
+
+		// Blue+green columns in top row.
+		for col := range 5 {
+			blue := cs.Color(col + 17)
+			target := side*6 + col + 17
+			xl, xa, xb := blue.src.Lab()
+			s := float64(side)*0.15 - float64(col)*0.05
+			cs.SetColor(target, color(maxContrast(xl, yl), blend(xa, ya, s), blend(xb, yb, s)))
 		}
-		for col := range perside {
-			for row := range perside {
-				cubeCell(cs, maxContrast, side, col, row, red, green, blue)
+
+		// Red+green rows in left column.
+		for row := range 5 {
+			red := cs.Color(row*36 + 52)
+			target := side*6 + row*36 + 52
+			xl, xa, xb := red.src.Lab()
+			s := float64(side)*0.15 - float64(row)*0.05
+			cs.SetColor(target, color(maxContrast(xl, yl), blend(xa, ya, s), blend(xb, yb, s)))
+		}
+	}
+
+	// Mixes of top row and left column.
+	for side := range 6 {
+		for col := range 5 {
+			blue := cs.Color(side*6 + col + 17)
+			yl, ya, yb := blue.src.Lab()
+			for row := range 5 {
+				red := cs.Color(side*6 + row*36 + 52)
+				target := side*6 + row*36 + col + 53
+				xl, xa, xb := red.src.Lab()
+				s := 0.5 + 0.1*float64(col) - 0.1*float64(row)
+				cs.SetColor(target, color(blend(xl, yl, s), blend(xa, ya, s), blend(xb, yb, s)))
 			}
 		}
 	}
-}
-
-func cubeCell(
-	cs Table,
-	maxContrast func(a, b float64) float64,
-	side, col, row int,
-	red, green, blue Color,
-) {
-	if row == 0 && col == 0 && side > 0 {
-		return
-	}
-	idx := side*6 + row*36 + col
-	if side == 0 {
-		idx += 53
-	} else {
-		idx += 16
-	}
-	lightsrc := 52 + row*36 // Left column of red colors from first side.
-	if side > 0 {
-		lightsrc -= 36 // Move upper to left/top corner.
-	}
-	c := red.Blend(blue, 0.5+0.1*float64(col)-0.1*float64(row), 0.5, 0)
-	light := maxContrast(
-		cs.Color(lightsrc).Lightness(),
-		cs.Color(16+col).Lightness(),
-	)
-	if side > 0 {
-		light = maxContrast(light, green.Lightness())
-	}
-	cs.SetColor(idx, c.With(-1, -1, light))
 }

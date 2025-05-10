@@ -99,7 +99,7 @@ func (cs *colorScheme) Write(w termcolor.Writer) error {
 }
 
 func (cs *colorScheme) setPrimaryColor(colors map[string]any, key string, c termcolor.Color) {
-	if c == nil {
+	if c.Nil() {
 		return
 	}
 	colors["primary"].(map[string]any)[key] = c.HEX()
@@ -118,7 +118,7 @@ func (cs *colorScheme) setIndexedColors(colors map[string]any) error {
 
 	indexed := make([]any, 0, 256)
 	for n, c := range cs.indexed {
-		if c == nil {
+		if c.Nil() {
 			if orig, ok := initial[n]; ok {
 				indexed = append(indexed, orig)
 			}

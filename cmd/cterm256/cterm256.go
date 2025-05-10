@@ -118,15 +118,15 @@ Patch 8/16 terminal color scheme with generated 239 other ANSI colors.
 			}
 			switch raw {
 			case "b", "bg":
-				fmt.Fprintf(os.Stderr, "bg: %+v\n", scheme.Background())
+				fmt.Fprintf(os.Stderr, "bg: %s\n", scheme.Background())
 			case "f", "fg":
-				fmt.Fprintf(os.Stderr, "fg: %+v\n", scheme.Foreground())
+				fmt.Fprintf(os.Stderr, "fg: %s\n", scheme.Foreground())
 			default:
 				n, err := strconv.Atoi(raw)
 				if err != nil {
 					return fmt.Errorf("debug flag[%d]: %v", i, err)
 				}
-				fmt.Fprintf(os.Stderr, "%d: %+v\n", n, scheme.Color(n))
+				fmt.Fprintf(os.Stderr, "%d: %s\n", n, scheme.Color(n))
 			}
 		}
 	}

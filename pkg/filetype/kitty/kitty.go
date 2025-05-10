@@ -44,10 +44,10 @@ func (f *fileType) Parse(input io.Reader) (termcolor.Table, error) {
 	if err := scan.Err(); err != nil {
 		return nil, err
 	}
-	if c, f := cs.named["cursor"], cs.named["foreground"]; c == nil && f != nil {
+	if c, f := cs.named["cursor"], cs.named["foreground"]; c.Nil() && !f.Nil() {
 		cs.named["cursor"] = f
 	}
-	if c, b := cs.named["cursor_text_color"], cs.named["background"]; c == nil && b != nil {
+	if c, b := cs.named["cursor_text_color"], cs.named["background"]; c.Nil() && !b.Nil() {
 		cs.named["cursor_text_color"] = b
 	}
 	return cs, nil
@@ -114,11 +114,11 @@ var (
 
 func scanColorValue(scan *bufio.Scanner) (termcolor.Color, error) {
 	if !scan.Scan() {
-		return nil, errMissingColorValue
+		return termcolor.Color{}, errMissingColorValue
 	}
 	v := scan.Text()
 	if !termcolor.HEX.MatchString(v) {
-		return nil, errCannotParseLine
+		return termcolor.Color{}, errCannotParseLine
 	}
 	return termcolor.FromHEX(scan.Text()), nil
 }
